@@ -3,7 +3,7 @@
 # QListWidget with ability for files to be drag/dropped in and with items being
 # deselected when you click in a blank area. Includes functions which can be
 # attached to buttons allowing for moving, removing, and clearing selected
-# items.
+# items, as well as for adding items using file and directory browsing.
 
 import os
 from PySide6 import QtCore, QtWidgets, QtGui
@@ -16,7 +16,6 @@ class customList(QtWidgets.QListWidget):
         self.setDragDropMode(QtWidgets.QAbstractItemView.InternalMove)
         self.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
         self.setAlternatingRowColors(True)
-        self.space = 0
 
     def addFilenames(self, filePaths):
         """ filePaths has to be a list. """
@@ -46,6 +45,24 @@ class customList(QtWidgets.QListWidget):
         if not idx.isValid():
             self.setCurrentRow(-1)
             self.setCurrentItem(None)
+
+    def openFileDialog(self):
+        dialog = QtWidgets.QFileDialog()
+        dialog.setFileMode(QtWidgets.QFileDialog.ExistingFile)
+        files = dialog.getOpenFileNames()[0]
+        self.addFilenames(files)
+    
+    def openDirDialog(self):
+        dialog = QtWidgets.QFileDialog()
+        dialog.setFileMode(QtWidgets.QFileDialog.Directory)
+        dir = dialog.getExistingDirectory()
+        if dir:
+            files = [os.path.join(dir, f) for f in os.listdir(dir)]
+            # Don't include directories
+            for f in files:
+                if os.path.isdir(f):
+                    files.remove(f)
+            self.addFilenames(files)
 
     def move(self, dir):
         """ dir is 1 if moving down and -1 if moving up, so bool(dir+1) is
