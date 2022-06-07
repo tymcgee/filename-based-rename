@@ -34,8 +34,12 @@ class FileWindow(QtWidgets.QWidget):
         self.setWindowTitle("Filename-based File Rename")
 
         self.mainLayout = QtWidgets.QVBoxLayout(self)
+        # Don't stretch at all
         self.compactSizePolicy = QtWidgets.QSizePolicy(
             QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
+        # Only stretch horizontally
+        self.compactVertSizePolicy = QtWidgets.QSizePolicy(
+            QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Maximum)
         openFileIcon = QtGui.QIcon('icons/file_open.svg')
         openDirIcon = QtGui.QIcon('icons/folder_open.svg')
 
@@ -65,7 +69,10 @@ class FileWindow(QtWidgets.QWidget):
         self.suffixFrames = []
         # Keep track of boxes so we can get the text from them later
         self.suffixBoxes = []
-        self.suffixBoxLayout = QtWidgets.QGridLayout()
+        self.suffixBoxFrame = QtWidgets.QFrame()
+        self.suffixBoxFrame.setSizePolicy(self.compactVertSizePolicy)
+        self.suffixBoxLayout = QtWidgets.QGridLayout(self.suffixBoxFrame)
+        self.suffixBoxLayout.setContentsMargins(0, 0, 0, 0)
         for i in range(maxTargetFiles):
             # Create ten suffix input boxes and store them in suffixBoxes
             suffixFrame = QtWidgets.QFrame()
@@ -81,7 +88,7 @@ class FileWindow(QtWidgets.QWidget):
         for s in self.suffixFrames[1:]:
             # Hide them all except the first one
             s.setVisible(False)
-        self.settingsLayout.addLayout(self.suffixBoxLayout)
+        self.settingsLayout.addWidget(self.suffixBoxFrame)
 
         ###############
         ## TOOLBAR BUTTONS, LIST BOXES
