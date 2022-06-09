@@ -8,7 +8,7 @@
 import os
 from PySide6 import QtCore, QtWidgets, QtGui
 
-class customList(QtWidgets.QListWidget):
+class CustomList(QtWidgets.QListWidget):
     def __init__(self):
         super().__init__()
         self.setAcceptDrops(True)
@@ -19,9 +19,15 @@ class customList(QtWidgets.QListWidget):
 
     def addFilenames(self, filePaths):
         """ filePaths has to be a list. """
-        fnames = [os.path.basename(f) for f in filePaths]
+        fnames = []
+        for f in filePaths:
+            bn = os.path.basename(f)
+            if os.path.isdir(f):
+                bn = bn + '/'
+            fnames.append(bn)
         items = [QtWidgets.QListWidgetItem(f) for f in fnames]
-        for i in items:
+        for i,fullPath in zip(items, filePaths):
+            i.setToolTip(fullPath)
             self.addItem(i)
 
     def dragEnterEvent(self, event):
@@ -47,22 +53,17 @@ class customList(QtWidgets.QListWidget):
             self.setCurrentItem(None)
 
     def openFileDialog(self):
-        dialog = QtWidgets.QFileDialog()
-        dialog.setFileMode(QtWidgets.QFileDialog.ExistingFile)
-        files = dialog.getOpenFileNames()[0]
+        files = QtWidgets.QFileDialog.getOpenFileNames()[0]
         self.addFilenames(files)
     
-    def openDirDialog(self):
-        dialog = QtWidgets.QFileDialog()
-        dialog.setFileMode(QtWidgets.QFileDialog.Directory)
-        dir = dialog.getExistingDirectory()
-        if dir:
-            files = [os.path.join(dir, f) for f in os.listdir(dir)]
-            # Don't include directories
-            for f in files:
-                if os.path.isdir(f):
-                    files.remove(f)
-            self.addFilenames(files)
+    def openRecursiveDirDialog(self):
+        dir = QtWidgets.QFileDialog.getExistingDirectory()
+        fileList = []
+        for root, dirs, files in os.walk(dir):
+            for filename in files:
+                fileList.append(os.path.join(root, filename))
+        fileList.sort()
+        self.addFilenames(fileList)
 
     def move(self, dir):
         """ dir is 1 if moving down and -1 if moving up, so bool(dir+1) is
