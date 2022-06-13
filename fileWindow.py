@@ -1,36 +1,31 @@
 # Tynan McGee
 # 6/5/2022
 # Main window UI
-# Using material design icons and symbols from 
+# Using material design icons and symbols from
 # https://fonts.google.com/icons
+# Code formatted using black
 
 import os
 import sys
 from PySide6 import QtCore, QtWidgets, QtGui
 from customList import CustomList
 
-# https://doc.qt.io/qtforpython/PySide6/QtWidgets/index.html#module-PySide6.QtWidgets
+# https://doc.qt.io/qtforpython/PySide6/QtWidgets/index.html#list-of-classes
 
 
 # todo:
-# - add a "full details" button to show full file paths in the preview window(?)
+# - add an option to specify destination path? so files are copied instead of
+#   renamed in place
 # - progress bar?
+# - add a tick box to the warning message to give the option of never showing it again
 
 # recently done:
-# - set full path of item in its tooltip when it's added to a list (accessible
-#   via item.toolTip())
-# - change "rename" to "preview rename" and add icon to the button
-# - add regex validator to disallow invalid characters in suffix boxes
-# - directory add button recursively adds files
-# - created input checking before renaming to make sure input is valid (with 
-#   error popups and all)
-# - created preview dialog in a separate file
-# -- preview dialog contains a table comparing current and future filenames,
-#    along with a "Rename!" and "Cancel" button. it automatically
-#    resizes the window according to how wide the contents are (well, sort of,
-#    this doesn't do the full job but it's good enough i think)
-# - rename functionality is done
-# - directories have a '/' suffix to differentiate them in the lists
+# - add a warning about moving files being dangerous
+# - code changes:
+# -- long strings split into multiple lines
+# -- single quotes '' to double quotes ""
+# -- some code formatting changes
+# -- some more comments and docstrings
 
 
 class FileWindow(QtWidgets.QWidget):
@@ -41,27 +36,29 @@ class FileWindow(QtWidgets.QWidget):
         self.mainLayout = QtWidgets.QVBoxLayout(self)
         # Don't stretch at all
         maxs = QtWidgets.QSizePolicy.Maximum
+        mins = QtWidgets.QSizePolicy.Minimum
         self.compactSizePolicy = QtWidgets.QSizePolicy(maxs, maxs)
         # Only stretch horizontally
-        self.compactVertSizePolicy = QtWidgets.QSizePolicy(
-            QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Maximum)
-        previewIcon = QtGui.QIcon('icons/preview.svg')
+        self.compactVertSizePolicy = QtWidgets.QSizePolicy(mins, maxs)
+        previewIcon = QtGui.QIcon("icons/preview.svg")
         # Filenames can't contain certain characters
         filenameRegex = QtCore.QRegularExpression(r'[^<>:"/\\\|\?\*]*')
         filenameValidator = QtGui.QRegularExpressionValidator(filenameRegex)
 
         ###############
-        ## SETTINGS
+        # SETTINGS
         boxesPerRow = 2
         numOfBoxCols = 5
-        maxTargetFiles = boxesPerRow*numOfBoxCols
+        maxTargetFiles = boxesPerRow * numOfBoxCols
         self.settingsLayout = QtWidgets.QVBoxLayout()
         # Use a frame in order to set size policy
         self.spinboxFrame = QtWidgets.QFrame()
         self.spinboxFrame.setSizePolicy(self.compactSizePolicy)
         self.spinboxLayout = QtWidgets.QHBoxLayout(self.spinboxFrame)
         self.spinboxLayout.setContentsMargins(0, 0, 0, 0)
-        self.targetFilesLabel = QtWidgets.QLabel('Number of files to rename per template file:')
+        self.targetFilesLabel = QtWidgets.QLabel(
+            "Number of files to rename per template file:"
+        )
         self.targetFilesLabel.setAlignment(QtCore.Qt.AlignRight)
         self.numOfTargetFiles = QtWidgets.QSpinBox()
         self.numOfTargetFiles.setRange(1, maxTargetFiles)
@@ -73,7 +70,7 @@ class FileWindow(QtWidgets.QWidget):
         self.settingsLayout.addWidget(self.spinboxFrame)
 
         ###############
-        ## SUFFIX INPUT BOXES
+        # SUFFIX INPUT BOXES
         # Using/keeping track of frames so that we can set visibility later
         self.suffixFrames = []
         # Keep track of boxes so we can get the text from them later
@@ -89,10 +86,12 @@ class FileWindow(QtWidgets.QWidget):
             suffixLayout.setContentsMargins(0, 0, 0, 0)
             suffix = QtWidgets.QLineEdit()
             suffix.setValidator(filenameValidator)
-            suffixLabel = QtWidgets.QLabel(f'File {i+1} Suffix:')
+            suffixLabel = QtWidgets.QLabel(f"File {i+1} Suffix:")
             suffixLayout.addWidget(suffixLabel)
             suffixLayout.addWidget(suffix)
-            self.suffixBoxLayout.addWidget(suffixFrame, i//boxesPerRow, i%boxesPerRow)
+            self.suffixBoxLayout.addWidget(
+                suffixFrame, i // boxesPerRow, i % boxesPerRow
+            )
             self.suffixFrames.append(suffixFrame)
             self.suffixBoxes.append(suffix)
         for s in self.suffixFrames[1:]:
@@ -101,20 +100,20 @@ class FileWindow(QtWidgets.QWidget):
         self.settingsLayout.addWidget(self.suffixBoxFrame)
 
         ###############
-        ## TOOLBAR BUTTONS, LIST BOXES
+        # TOOLBAR BUTTONS, LIST BOXES
         # left
-        self.leftBox = QtWidgets.QGroupBox('Template files')
+        self.leftBox = QtWidgets.QGroupBox("Template files")
         self.leftLayout = QtWidgets.QGridLayout(self.leftBox)
         self.leftList = CustomList()
         self.leftListBtns = self.createListBtns(self.leftList)
         # right
-        self.rightBox = QtWidgets.QGroupBox('Files to be renamed')
+        self.rightBox = QtWidgets.QGroupBox("Files to be renamed")
         self.rightLayout = QtWidgets.QGridLayout(self.rightBox)
         self.rightList = CustomList()
         self.rightListBtns = self.createListBtns(self.rightList)
 
         ###############
-        ## LIST LAYOUTS
+        # LIST LAYOUTS
         self.leftLayout.addWidget(self.leftListBtns, 1, 0)
         self.leftLayout.addWidget(self.leftList, 1, 1, 1, 2)
         self.rightLayout.addWidget(self.rightListBtns, 1, 3)
@@ -125,21 +124,20 @@ class FileWindow(QtWidgets.QWidget):
         self.listSplitter.addWidget(self.rightBox)
 
         ###############
-        ## BOTTOM BUTTON
-        self.execButton = QtWidgets.QPushButton('Preview Rename')
+        # BOTTOM BUTTON
+        self.execButton = QtWidgets.QPushButton("Preview Rename")
         self.execButton.setIcon(previewIcon)
         self.execButton.setIconSize(QtCore.QSize(25, 25))
         self.execButton.clicked.connect(self.previewRename)
 
         ###############
-        ## FINAL SETUP
+        # FINAL SETUP
         self.mainLayout.addLayout(self.settingsLayout)
         self.mainLayout.addWidget(self.listSplitter)
         self.mainLayout.addWidget(self.execButton)
 
-
     ###############
-    ## TOOLBAR BUTTONS
+    # TOOLBAR BUTTONS
     def createListBtns(self, l):
         # Use a frame in order to control sizePolicy
         buttonFrame = QtWidgets.QFrame()
@@ -153,18 +151,44 @@ class FileWindow(QtWidgets.QWidget):
         downBtn = QtWidgets.QToolButton()
         delBtn = QtWidgets.QToolButton()
         clearBtn = QtWidgets.QToolButton()
-        buttons = [addFilesBtn, addFolderBtn, upBtn, downBtn, sortBtn, delBtn,
-                   clearBtn]
-        icons = ['add.svg', 'folder_open.svg', 'keyboard_up.svg',
-                 'keyboard_down.svg', 'sort.svg', 'close.svg', 'delete_all.svg']
-        tooltips = ['Add file(s)', 'Add file(s) from directory recursively',
-                    'Move item up', 'Move item down', 'Sort items',
-                    'Remove selected item', 'Remove all items']
-        functions = [l.openFileDialog, l.openRecursiveDirDialog,
-                     lambda: l.move(-1), lambda: l.move(1), l.sortItems,
-                     l.remove, l.clear]
-        for btn,icn,tltip,fcn in zip(buttons, icons, tooltips, functions):
-            btn.setIcon(QtGui.QIcon(f'icons/{icn}'))
+        buttons = [
+            addFilesBtn,
+            addFolderBtn,
+            upBtn,
+            downBtn,
+            sortBtn,
+            delBtn,
+            clearBtn,
+        ]
+        icons = [
+            "add.svg",
+            "folder_open.svg",
+            "keyboard_up.svg",
+            "keyboard_down.svg",
+            "sort.svg",
+            "close.svg",
+            "delete_all.svg",
+        ]
+        tooltips = [
+            "Add file(s)",
+            "Add file(s) from directory recursively",
+            "Move item up",
+            "Move item down",
+            "Sort items",
+            "Remove selected item",
+            "Remove all items",
+        ]
+        functions = [
+            l.openFileDialog,
+            l.openRecursiveDirDialog,
+            lambda: l.move(-1),
+            lambda: l.move(1),
+            l.sortItems,
+            l.remove,
+            l.clear,
+        ]
+        for btn, icn, tltip, fcn in zip(buttons, icons, tooltips, functions):
+            btn.setIcon(QtGui.QIcon(f"icons/{icn}"))
             btn.setIconSize(QtCore.QSize(25, 25))
             btn.setToolTip(tltip)
             btn.clicked.connect(fcn)
@@ -174,7 +198,7 @@ class FileWindow(QtWidgets.QWidget):
     def updateSuffixBoxes(self, n):
         if self.spinboxPrevValue < n:
             # Spinbox increased, show next box
-            self.suffixFrames[n-1].setVisible(True)
+            self.suffixFrames[n - 1].setVisible(True)
         else:
             # Spinbox decreased, remove previous box
             self.suffixFrames[n].setVisible(False)
@@ -184,7 +208,7 @@ class FileWindow(QtWidgets.QWidget):
         raise NotImplementedError()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app = QtWidgets.QApplication([])
 
     win = FileWindow()
